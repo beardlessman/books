@@ -3,3 +3,4 @@
 Здесь я буду вести конспекты книг, которые читаю. Почти все они — о программировании.
 
 * [Роберт Мартин «Чистый код»](./Martin_Robert__Clean_Code.md)
+* [«Выразительный Javascript»](./Marijn_Haverbeke__Eloquent_Javascript.md)
