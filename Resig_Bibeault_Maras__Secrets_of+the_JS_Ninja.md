@@ -110,7 +110,132 @@ JS код может быть глобальным (один для програ
 ## Генераторы и обещания
 [↑ up](#оглавление) 
 
-Конспект
+### Генераторы
+
+Генератор -- функция, генерирующая последовательность значений по запросу. После генерации значения функция-генератор не завершает свою работу, а приостанавливает выполнени до следующего запроса.
+#### Синтаксис
+```
+function* WeaponGenerator() {
+    yield 'Katana';
+    yield 'Wakizashi';
+}
+for (let weapon of WeaponGenerator()) {
+    assert(weapon !== undefined, weapon);
+}
+```
+В коде генератора нет `return`, поскольку вызов генератора приводит не к выполнению, а к созданию объекта-итератора.
+```
+const weaponsIterator = WeaponGenerator();
+const weapon1 = weaponsIterator.next(); // { value: 'Katana', done: false }
+const weapon2 = weaponsIterator.next(); // { value: 'Wakizashi', done: false }
+const weapon3 = weaponsIterator.next(); // { value: undefined, done: true }
+```
+#### Генератор в генераторе
+```
+function* WarriorGenerator() {
+    yield 'Sun Tzu';
+    yield* NinjaGenerator();
+    yield 'Khan';
+}
+function* NinjaGenerator() {
+    yield 'Hattori';
+    yield 'Yoshi';
+}
+
+// последовательный вывод будет таким: Sun Tzu, Hattori, Yoshi, Khan
+```
+#### Применение генераторов
+- генератор ID
+```
+function* idGenerator() {
+    let id = 0;
+    while(true) {
+        yield ++id;
+    }
+}
+```
+- рекурсивный обход DOM-дерева
+```
+function* DomTraversal(element) {
+    yield element;
+    element = element.firstElementChild;
+    while(element) {
+        yield* DomTraversal(element);
+        element = element.nextElementSibling;
+    }
+}
+```
+#### Обмен данными с генератором
+Для возврата данных из генератора служит выражение `yield`, а для передачи в генератор -- `next()` с аргументом. Аргумент передается в следующий по очереди `yield`
+```
+function* NinjaGenerator(action) {
+    let imposter = yield (`Hattori ${action}`);
+    if (imposter === 'Hanzo') {
+        console.log('Generator has next() argument === Hanzo');
+    }
+    yield `Yoshi (${imposter}) ${action}`;
+}
+
+const ninjaIterator = NinjaGenerator('skulk');
+const result1 = ninjaIterator.next();
+console.log(result1); // {value: "Hattori skulk", done: false}
+const result2 = ninjaIterator.next('Hanzo');
+console.log(result2); // {value: "Yoshi (Hanzo) skulk", done: false}
+const result3 = ninjaIterator.next();
+console.log(result3); // {value: undefined, done: true}
+```
+#### Генерирование исключений
+```
+function* gen() {
+  try {
+    let result = yield "Сколько будет 2 + 2?";
+    alert("выше будет исключение ^^^");
+  } catch(e) {
+    alert(e); // выведет ошибку
+  }
+}
+let generator = gen();
+let question = generator.next().value;
+generator.throw(new Error("ответ не найден в моей базе данных"));
+```
+Если нет обработчика `catch(e)` в генераторе:
+```
+function* gen() {
+  let result = yield "Сколько будет 2 + 2?";
+}
+let generator = gen();
+let question = generator.next().value;
+try {
+  generator.throw(new Error("ответ не найден в моей базе данных"));
+} catch(e) {
+  alert(e); // выведет ошибку
+}
+```
+
+### Обещания (Promise)
+
+Promise -- заполнитель значения, которое отсутствует в настоящий момент, но появится впоследствии. В любом исходе будет получено некое значение: результат или ошибка.
+
+```
+const promise = new Promise((resolve, reject) => {
+    resolve('kek');
+    // reject('error');
+});
+promise.then(res => {
+    console.log(res);
+}, err => {
+    console.log(err);
+});
+```
+#### Проблемы, решаемые с помощью обещаний
+
+- Трудности обработки ошибок: для обратных вывовов для асинхронных операций невозможно просто обернуть в `try catch` -- обратный вызов обычно выполняется не на том же этапе цикла событий, что и асинхронный вызов.
+- Последовательное и параллельное выполнение: для последовательного получается вложенный код, который трудно понять, а при параллельном сложно отследить получение результата
+
+#### Механизм
+
+При создании обещание оно имеет состояние "ожидание" (неразрешенное). При вызове `resolve` переходит в сотояние "выполнено", а при `reject` -- "отклонено"
+
 
 ## ООП с помощью прототипов
 [↑ up](#оглавление) 
